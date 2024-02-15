@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  make-app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: makefile-test:latest
+    container_name: make-container
+    volumes:
+      # - ./src:/usr/local/app # FIXME: change this to your app's source code directory
+      - ./:/usr/local/app # FIXME: change this to your app's Makefile
+    command: make
+
