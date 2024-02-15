@@ -122,3 +122,13 @@ create:
 ```
 
 - ?=を使って再定義可能な変数を作成できる。
+
+```makefile
+CXX ?= g++
+```
+
+- ビルドの依存関係を書く。
+
+```makefile
+build: create $(CXX_OBJECTS) # buildの前にcreateとCXX_OBJECTSが実行される
+```
