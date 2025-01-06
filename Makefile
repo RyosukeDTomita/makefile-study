@@ -1,17 +1,18 @@
 # ?=は再定義可能
 DEBUG ?= 1
-# DEBUG = 0
 ENEABLE_WARNINGS ?= 1
-# ENEABLE_WARNINGS = 0
 WARNINGS_AS_ERRORS ?= 0
-# WARNINGS_AS_ERRORS = 1
-
 INCLUDE_DIR = include
 SOURCE_DIR = src
 BUILD_DIR = build
-
 CXX = g++
 CXX_STANDARD = c++17
+CXX_SOURCES = $(wildcard $(SOURCE_DIR)/*.cpp)
+# NOTE: patsubstを使うことでソースに対応する実行ファイルに変換できる
+CXX_OBJECTS = $(patsubst $(SOURCE_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(CXX_SOURCES)) # $(patsubst $(SRC_DIR)/%.go, $(BUILD_DIR)/, $(GO_SRC)) # $(patsubst match_pattern, after_conversion_pattern, object_to_be_converted) .cppを.oに変換
+
+# ファイル名と同じ名前のmakeコマンドを実行できるようにする。
+.PHONY: create build execute clean all
 
 ifeq ($(ENABLE_WARNINGS), 1)
 	CXX_WARNINGS = -Wall -Wextra -Wpedantic
@@ -38,21 +39,26 @@ else
 	CXXFLAGS += -O3 # 最適化レベルを03にすることでコードのパフォーマンスをあげるようにコンパイルされる。
 	EXECUTABLE_NAME = mainRelease
 endif
-
-
 CXX_COMPILER_CALL = $(CXX) $(CXXFLAGS)
 
-CXX_SOURCES = $(wildcard $(SOURCE_DIR)/*.cpp)
-CXX_OBJECTS = $(patsubst $(SOURCE_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(CXX_SOURCES)) # %.cppを%.oに変換する
 
+# デフォルトタスク
 all: create build
 
 create:
 	# @をつけることでコマンドを表示しない
 	@mkdir -p $(BUILD_DIR)
 
-build: create $(CXX_OBJECTS)
+# オブジェクトファイルから最終的なリンクファイルを作成する
+build: $(CXX_OBJECTS) # 実行ファイルが存在しない，もしくはソースが新しくなっている場合にパターンルールが適用される
 	$(CXX_COMPILER_CALL) $(CXX_OBJECTS) $(LDFLAGS) -o $(BUILD_DIR)/$(EXECUTABLE_NAME)
+
+# $@: the file name of the target
+# $<: the name of the first dependency
+# $^: the names of all prerequisites
+# パターンルールは対応するオブジェクトファイルを作成する
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
+	$(CXX_COMPILER_CALL) -c $< -o $@
 
 execute:
 	./$(BUILD_DIR)/$(EXECUTABLE_NAME)
@@ -61,11 +67,3 @@ clean:
 	rm -fv $(BUILD_DIR)/*.o
 	rm -fv $(BUILD_DIR)/$(EXECUTABLE_NAME)
 
-# $@: the file name of the target
-# $<: the name of the first dependency
-# $^: the names of all prerequisites
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
-	$(CXX_COMPILER_CALL) -c $< -o $@
-
-# ファイル名と同じ名前のmakeコマンドを実行できるようにする。
-.PHONY: create build execute clean all
